@@ -1,3 +1,4 @@
+import 'package:cvnova/providers/auth_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -36,7 +37,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -57,7 +57,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ShaderMask(
-                  shaderCallback: (bounds) => AppGradients.hero.createShader(bounds),
+                  shaderCallback: (bounds) =>
+                      AppGradients.hero.createShader(bounds),
                   child: Text(
                     'CVNova',
                     style: Theme.of(context).textTheme.displayMedium?.copyWith(
