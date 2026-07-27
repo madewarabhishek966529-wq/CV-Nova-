@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
+import '../../routes/route_names.dart';
+import '../../theme/app_colors.dart';
 import '../../widgets/common/glass_card.dart';
 import '../../widgets/common/score_ring.dart';
 
@@ -16,6 +20,7 @@ class DashboardScreen extends ConsumerWidget {
     final isDark = themeMode == ThemeMode.dark ||
         (themeMode == ThemeMode.system &&
             MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    final user = ref.watch(authProvider).user;
 
     return Scaffold(
       appBar: AppBar(
@@ -24,6 +29,14 @@ class DashboardScreen extends ConsumerWidget {
           IconButton(
             icon: Icon(isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
             onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout_rounded),
+            tooltip: 'Sign out',
+            onPressed: () async {
+              await ref.read(authProvider.notifier).logout();
+              if (context.mounted) context.go(RouteNames.login);
+            },
           ),
           const SizedBox(width: 8),
         ],
@@ -34,7 +47,10 @@ class DashboardScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Good to see you.', style: Theme.of(context).textTheme.displaySmall),
+              Text(
+                user != null ? 'Good to see you, ${user.fullName.split(' ').first}.' : 'Good to see you.',
+                style: Theme.of(context).textTheme.displaySmall,
+              ),
               const SizedBox(height: 4),
               Text(
                 'Here\'s where your career stands today.',
@@ -69,6 +85,33 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 16),
+              InkWell(
+                borderRadius: BorderRadius.circular(24),
+                onTap: () => context.push(RouteNames.resumeList),
+                child: GlassCard(
+                  child: Row(
+                    children: [
+                      const Icon(Icons.description_outlined, color: AppColors.indigo, size: 28),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('My Resumes', style: Theme.of(context).textTheme.titleMedium),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Build, edit, and manage your resumes.',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right_rounded),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               GlassCard(

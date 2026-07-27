@@ -1,24 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import '../../providers/auth_provider.dart';
 import '../../routes/route_names.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_gradients.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 1400), () {
-      if (mounted) context.go(RouteNames.login);
-    });
+    // Reading the provider here (not watching) instantiates it immediately,
+    // so session restoration runs in parallel with the splash delay below
+    // instead of only starting once the delay finishes.
+    ref.read(authProvider);
+    Future.delayed(const Duration(milliseconds: 1200), _routeOnceResolved);
+  }
+
+  Future<void> _routeOnceResolved() async {
+    while (mounted && ref.read(authProvider).status == AuthStatus.unknown) {
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+    if (!mounted) return;
+    final isAuthenticated = ref.read(authProvider).isAuthenticated;
+    context.go(isAuthenticated ? RouteNames.dashboard : RouteNames.login);
   }
 
   @override

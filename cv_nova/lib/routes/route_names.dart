@@ -7,4 +7,7 @@ class RouteNames {
   static const login = '/login';
   static const signup = '/signup';
   static const dashboard = '/dashboard';
+  static const resumeList = '/resumes';
+  static const resumeEditor = '/resumes/editor'; // append '/{id}'
+  static const resumePreview = '/resumes/preview'; // append '/{id}'
 }

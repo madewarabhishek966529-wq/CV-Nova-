@@ -1,3 +1,1 @@
-Reserved for the upcoming phases (resume data models, API services, and
-composite domain components — e.g. resume section editors). Left empty on
-purpose in the skeleton phase rather than filled with placeholder classes.
+Reserved for composite domain components that combine multiple widgets/models into a larger unit — e.g. a full 'resume preview card' combining ScoreRing + resume data, or an ATS-report component (upcoming phases). Simple reusable widgets live in widgets/, not here.

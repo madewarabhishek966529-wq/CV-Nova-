@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../routes/route_names.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/api_exceptions.dart';
 import '../../widgets/common/gradient_button.dart';
 import '../../widgets/common/glass_card.dart';
 import '../../theme/app_gradients.dart';
 
-class SignupScreen extends StatefulWidget {
+class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -50,12 +53,25 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
 
-    // TODO(auth-phase): wire to POST /api/auth/signup once the backend exists.
-    await Future.delayed(const Duration(milliseconds: 900));
+    try {
+      await ref.read(authProvider.notifier).signup(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+            fullName: _nameController.text.trim(),
+          );
+      if (!mounted) return;
+      context.go(RouteNames.dashboard);
+    } on ApiException catch (e) {
+      _showError(e.isConflict ? 'An account with this email already exists.' : e.message);
+    } on NetworkException catch (e) {
+      _showError(e.message);
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
 
-    if (!mounted) return;
-    setState(() => _submitting = false);
-    context.go(RouteNames.dashboard);
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override

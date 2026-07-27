@@ -10,6 +10,12 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Networking
+  http: ^1.2.1
+
+  # Secure token storage
+  flutter_secure_storage: ^9.2.2
+
   # State management
   flutter_riverpod: ^2.5.1
 

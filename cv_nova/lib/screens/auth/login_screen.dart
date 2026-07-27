@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../routes/route_names.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/api_exceptions.dart';
 import '../../widgets/common/gradient_button.dart';
 import '../../widgets/common/glass_card.dart';
 import '../../theme/app_gradients.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -43,12 +46,24 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
 
-    // TODO(auth-phase): wire to POST /api/auth/login once the backend exists.
-    await Future.delayed(const Duration(milliseconds: 900));
+    try {
+      await ref.read(authProvider.notifier).login(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
+      if (!mounted) return;
+      context.go(RouteNames.dashboard);
+    } on ApiException catch (e) {
+      _showError(e.isUnauthorized ? 'Incorrect email or password.' : e.message);
+    } on NetworkException catch (e) {
+      _showError(e.message);
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
 
-    if (!mounted) return;
-    setState(() => _submitting = false);
-    context.go(RouteNames.dashboard);
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
