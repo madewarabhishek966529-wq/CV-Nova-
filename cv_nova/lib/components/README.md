@@ -1,1 +1,0 @@
-Reserved for composite domain components that combine multiple widgets/models into a larger unit — e.g. a full 'resume preview card' combining ScoreRing + resume data, or an ATS-report component (upcoming phases). Simple reusable widgets live in widgets/, not here.

@@ -1,0 +1,36 @@
+# Local dev infra — PostgreSQL + Redis.
+# The FastAPI app runs on the host via `uvicorn` for fast reload; run:
+#   cd backend && uvicorn app.main:app --reload
+
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cvnova
+      POSTGRES_PASSWORD: cvnova
+      POSTGRES_DB: cvnova
+    ports:
+      - "5432:5432"
+    volumes:
+      - cvnova_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cvnova"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  cvnova_pg_data:
