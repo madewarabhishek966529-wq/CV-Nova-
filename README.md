@@ -1,4 +1,4 @@
-# CVNova — Flutter Frontend
+��# CVNova — Flutter Frontend
 
 AI-powered resume builder & career assistant. Theme system, real
 authentication, and now a full multi-resume editor wired to the backend's
@@ -11,7 +11,7 @@ flutter pub get
 flutter run
 ```
 
-Make sure the backend (`cvnova_backend/`) is running first — see its README.
+Make sure the backend (`cvnova_backend/`is running first — see its README.
 **Android emulator only:** change `apiBaseUrl` in `lib/utils/constants.dart`
 to `http://10.0.2.2:8000/api/v1`; `localhost` works as-is for iOS
 simulator, web, and desktop.
@@ -57,7 +57,7 @@ lib/
 ## How the editor works
 
 - **Section order & visibility** live on the `Resume` itself
-  (`section_order`, `hidden_sections`) — dragging a section or tapping its
+  (`section_order`, `hidden_sections`— dragging a section or tapping its
   eye icon mutates that array and autosaves, exactly like backend-side
   state, not local-only UI state.
 - **Every section is one of two shapes**: a flat list of strings (skills,
@@ -67,9 +67,9 @@ lib/
   headline, and summary are the only true "singular" sections and get their
   own small widgets.
 - **Autosave**: any edit calls `ResumeEditorNotifier.apply()`, which updates
-  local state immediately (typing never waits on the network) and debounces
+  local state immediately (typing never waits on the networkand debounces
   a `PUT /resumes/{id}` by 900ms. Leaving the editor screen
-  (`dispose()`) flushes any pending edit immediately so nothing is lost.
+  (`dispose()`flushes any pending edit immediately so nothing is lost.
 - **New item ids** are generated client-side
   (`DateTime.now().microsecondsSinceEpoch.toString()`) — the backend trusts
   client-generated ids within a resume the caller owns (see backend
@@ -95,7 +95,7 @@ that's the first place to look.
   editor mutates, so edits — including ones still mid-debounce, not yet
   saved to the server — show up immediately, no separate fetch or manual
   refresh. Renders as a single, clean document layout
-  (`widgets/resume/preview/resume_preview.dart`) honoring section order and
+  (`widgets/resume/preview/resume_preview.dart`honoring section order and
   hidden sections; personal info and headline fold into the header the way
   every resume template treats them, rather than appearing as their own
   titled sections. This is the one, implicit visual template — a template
@@ -118,8 +118,8 @@ that's the first place to look.
 
 ## Design system
 
-- **Color**: `ink` (#0C0E1B) / `paper` (#F6F5FB) surfaces; brand ramp is
-  indigo → violet → amber (`#4A3AFF → #8B5CF6 → #F5A623`) — the app's score
+- **Color**: `ink` (#0C0E1B/ `paper` (#F6F5FBsurfaces; brand ramp is
+  indigo → violet → amber (`#4A3AFF → #8B5CF6 → #F5A623`— the app's score
   gradient, reused for every score/progress visual.
 - **Type**: Space Grotesk (display), Inter (body), JetBrains Mono (scores/stats).
 - **Signature element**: `ScoreRing` — reuse it for every future score
@@ -130,5 +130,4 @@ that's the first place to look.
 
 Ollama AI integration for AI-generated summaries/bullet points per the
 original spec, then ATS scoring.
-
 

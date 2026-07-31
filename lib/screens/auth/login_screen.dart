@@ -48,7 +48,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       await ref.read(authProvider.notifier).login(
-            email: _emailController.text.trim(),
+            email: _emailController.text.trim().toLowerCase(),
             password: _passwordController.text,
           );
       if (!mounted) return;
@@ -101,6 +101,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
+                        textCapitalization: TextCapitalization.none,
                         textInputAction: TextInputAction.next,
                         decoration: const InputDecoration(
                           labelText: 'Email',

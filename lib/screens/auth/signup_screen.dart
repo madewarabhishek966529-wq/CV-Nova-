@@ -55,7 +55,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
     try {
       await ref.read(authProvider.notifier).signup(
-            email: _emailController.text.trim(),
+            email: _emailController.text.trim().toLowerCase(),
             password: _passwordController.text,
             fullName: _nameController.text.trim(),
           );
@@ -119,6 +119,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
+                        textCapitalization: TextCapitalization.none,
                         textInputAction: TextInputAction.next,
                         decoration: const InputDecoration(
                           labelText: 'Email',
