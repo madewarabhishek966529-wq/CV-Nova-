@@ -1,13 +1,9 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from slowapi import _rate_limit_exceeded_handler
-from slowapi.errors import RateLimitExceeded
-from slowapi.middleware import SlowAPIMiddleware
 
-from app.api.v1.endpoints.auth import limiter
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
@@ -40,18 +36,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-app.add_middleware(SlowAPIMiddleware)
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
-    # allow_credentials must be False when allow_origins=["*"] — the CORS
-    # spec forbids wildcard origin with credentials.  Flutter sends auth via
-    # the Authorization header (Bearer token), not cookies, so False is correct
-    # for the default dev setup.  Set explicit origins in CORS_ORIGINS to
-    # re-enable credentials (needed if cookies are ever used).
+    # No auth headers/cookies to worry about in single-user mode — every
+    # request is anonymous and gets the same local user. Credentials stay
+    # off since origins default to "*".
     allow_credentials=settings.cors_origins_list != ["*"],
     allow_methods=["*"],
     allow_headers=["*"],

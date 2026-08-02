@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/resume.dart';
 import '../services/resume_service.dart';
-import 'auth_provider.dart';
 
 enum SaveStatus { idle, saving, saved, error }
 
@@ -40,25 +39,20 @@ class ResumeEditorState {
 /// to local state immediately (instant UI feedback) and schedules a
 /// debounced autosave — the editor never blocks typing on a network call.
 class ResumeEditorNotifier extends StateNotifier<ResumeEditorState> {
-  ResumeEditorNotifier(this._ref, this.resumeId, {ResumeService? service})
+  ResumeEditorNotifier(this.resumeId, {ResumeService? service})
       : _service = service ?? ResumeService(),
         super(const ResumeEditorState()) {
     _load();
   }
 
-  final Ref _ref;
   final String resumeId;
   final ResumeService _service;
   Timer? _debounce;
 
-  String? get _token => _ref.read(authProvider).accessToken;
-
   Future<void> _load() async {
-    final token = _token;
-    if (token == null) return;
     state = state.copyWith(loading: true, error: null);
     try {
-      final resume = await _service.get(resumeId, token);
+      final resume = await _service.get(resumeId);
       state = state.copyWith(resume: resume, loading: false);
     } catch (e) {
       state = state.copyWith(loading: false, error: e.toString());
@@ -81,13 +75,12 @@ class ResumeEditorNotifier extends StateNotifier<ResumeEditorState> {
   }
 
   Future<void> _save() async {
-    final token = _token;
     final resume = state.resume;
-    if (token == null || resume == null) return;
+    if (resume == null) return;
 
     state = state.copyWith(saveStatus: SaveStatus.saving);
     try {
-      final saved = await _service.update(resume, token);
+      final saved = await _service.update(resume);
       state = state.copyWith(resume: saved, saveStatus: SaveStatus.saved);
     } catch (e) {
       state = state.copyWith(saveStatus: SaveStatus.error, error: e.toString());
@@ -110,5 +103,5 @@ class ResumeEditorNotifier extends StateNotifier<ResumeEditorState> {
 
 final resumeEditorProvider =
     StateNotifierProvider.family<ResumeEditorNotifier, ResumeEditorState, String>(
-  (ref, resumeId) => ResumeEditorNotifier(ref, resumeId),
+  (ref, resumeId) => ResumeEditorNotifier(resumeId),
 );

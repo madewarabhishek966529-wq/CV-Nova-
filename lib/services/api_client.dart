@@ -7,8 +7,12 @@ import '../utils/constants.dart';
 import 'api_exceptions.dart';
 
 /// Thin wrapper over [http.Client] — every backend call in the app should
-/// go through here rather than calling `http` directly, so auth headers,
-/// JSON handling, and error translation stay in one place.
+/// go through here rather than calling `http` directly, so JSON handling
+/// and error translation stay in one place.
+///
+/// No auth headers: CVNova runs single-user/local, and the backend treats
+/// every request as the same implicit local user — there's nothing to
+/// attach here.
 class ApiClient {
   ApiClient({http.Client? client}) : _client = client ?? http.Client();
 
@@ -17,58 +21,37 @@ class ApiClient {
 
   Uri _uri(String path) => Uri.parse('$_baseUrl$path');
 
-  Map<String, String> _headers({String? token}) => {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      };
+  static const _headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
 
-  Future<Map<String, dynamic>> getJson(String path, {String? token}) async {
-    final response = await _send(
-      () => _client.get(_uri(path), headers: _headers(token: token)),
-    );
+  Future<Map<String, dynamic>> getJson(String path) async {
+    final response = await _send(() => _client.get(_uri(path), headers: _headers));
     return _decodeObject(response);
   }
 
-  Future<List<dynamic>> getJsonList(String path, {String? token}) async {
-    final response = await _send(
-      () => _client.get(_uri(path), headers: _headers(token: token)),
-    );
+  Future<List<dynamic>> getJsonList(String path) async {
+    final response = await _send(() => _client.get(_uri(path), headers: _headers));
     return _decodeList(response);
   }
 
-  Future<Map<String, dynamic>> postJson(
-    String path, {
-    Map<String, dynamic>? body,
-    String? token,
-  }) async {
+  Future<Map<String, dynamic>> postJson(String path, {Map<String, dynamic>? body}) async {
     final response = await _send(
-      () => _client.post(
-        _uri(path),
-        headers: _headers(token: token),
-        body: jsonEncode(body ?? {}),
-      ),
+      () => _client.post(_uri(path), headers: _headers, body: jsonEncode(body ?? {})),
     );
     return _decodeObject(response);
   }
 
-  Future<Map<String, dynamic>> putJson(
-    String path, {
-    required Map<String, dynamic> body,
-    String? token,
-  }) async {
+  Future<Map<String, dynamic>> putJson(String path, {required Map<String, dynamic> body}) async {
     final response = await _send(
-      () => _client.put(
-        _uri(path),
-        headers: _headers(token: token),
-        body: jsonEncode(body),
-      ),
+      () => _client.put(_uri(path), headers: _headers, body: jsonEncode(body)),
     );
     return _decodeObject(response);
   }
 
-  Future<void> delete(String path, {String? token}) async {
-    await _send(() => _client.delete(_uri(path), headers: _headers(token: token)));
+  Future<void> delete(String path) async {
+    await _send(() => _client.delete(_uri(path), headers: _headers));
   }
 
   Future<http.Response> _send(Future<http.Response> Function() request) async {

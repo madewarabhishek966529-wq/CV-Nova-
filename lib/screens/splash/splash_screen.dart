@@ -1,38 +1,27 @@
-import 'package:cvnova/providers/auth_state.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import '../../providers/auth_provider.dart';
 import '../../routes/route_names.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_gradients.dart';
 
-class SplashScreen extends ConsumerStatefulWidget {
+/// Purely a branding beat — CVNova is single-user/local, so there's no
+/// session to restore and nothing to gate on here. It just shows the logo
+/// for a moment, then lands on the dashboard.
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  ConsumerState<SplashScreen> createState() => _SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends ConsumerState<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Reading the provider here (not watching) instantiates it immediately,
-    // so session restoration runs in parallel with the splash delay below
-    // instead of only starting once the delay finishes.
-    ref.read(authProvider);
-    Future.delayed(const Duration(milliseconds: 1200), _routeOnceResolved);
-  }
-
-  Future<void> _routeOnceResolved() async {
-    while (mounted && ref.read(authProvider).status == AuthStatus.unknown) {
-      await Future.delayed(const Duration(milliseconds: 100));
-    }
-    if (!mounted) return;
-    final isAuthenticated = ref.read(authProvider).isAuthenticated;
-    context.go(isAuthenticated ? RouteNames.dashboard : RouteNames.login);
+    Future.delayed(const Duration(milliseconds: 1200), () {
+      if (mounted) context.go(RouteNames.dashboard);
+    });
   }
 
   @override

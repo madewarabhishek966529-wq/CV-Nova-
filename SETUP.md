@@ -1,96 +1,85 @@
-# CVNova — Setup & Fix Notes
+# CVNova — Setup Notes
 
-## The bug that was fixed: "doesn't login after signup"
+CVNova now runs as a **single-user, local app**. There is no login, no
+signup, no accounts, no tokens — you open the app and you're straight into
+your resumes. This section explains what changed and why; skip to
+"Getting it running" if you just want to build it.
 
-**Root cause:** email case-sensitivity.
+## Why no auth
 
-- Signup stored the email exactly as typed (e.g. `CaseUser2@example.com`).
-- Login compared emails with an exact, case-sensitive match.
-- So signing up as `CaseUser2@example.com` and logging in as
-  `caseuser2@example.com` — same password, different casing — failed with
-  `401 Incorrect email or password`, even though the credentials were
-  correct. This is extremely common in practice: phone keyboards
-  auto-capitalize, people retype emails inconsistently, etc.
-- It also allowed **duplicate accounts** for the same address in different
-  casing, since the uniqueness check was case-sensitive too.
+This was a deliberate removal, not a bug fix. The app doesn't need
+multi-tenant accounts to be useful — one person, one device (or one shared
+local backend), one set of resumes.
 
-Reproduced directly against the backend (not guessed from reading code):
+**Backend (`backend/app/api/deps.py`):** the `get_current_user` dependency
+no longer validates a Bearer token. Instead, it auto-provisions a single
+fixed-UUID row in `users` (`00000000-0000-0000-0000-000000000001`,
+`local@cvnova.app`) the first time the app is ever hit, and returns that
+same row on every request after. Every other endpoint (`resumes.py`,
+`ai.py`) needed **zero changes** — they still depend on `CurrentUser`,
+which now just resolves differently.
 
-```
-POST /auth/signup {"email": "CaseUser2@example.com", ...}   -> 201 Created
-POST /auth/login  {"email": "caseuser2@example.com", ...}   -> 401 Incorrect email or password  (BEFORE FIX)
-POST /auth/login  {"email": "caseuser2@example.com", ...}   -> 200 OK, tokens returned            (AFTER FIX)
-```
+Removed entirely: `endpoints/auth.py`, `services/auth_service.py`,
+`schemas/auth.py`, `core/security.py` (JWT + password hashing), the
+`passlib`/`bcrypt`/`python-jose`/`slowapi` dependencies, and the JWT
+settings (`SECRET_KEY`, `ALGORITHM`, token expiry) from config.
 
-**Fix — normalize email in one place, at the schema boundary:**
-- `backend/app/schemas/user.py` — `UserCreate.email` now strips + lowercases
-  via a `field_validator`.
-- `backend/app/schemas/auth.py` — `LoginRequest.email` does the same, so it
-  always agrees with what was stored at signup.
-- `lib/screens/auth/signup_screen.dart` and `login_screen.dart` — lowercase
-  the email client-side too (defense in depth), and set
-  `textCapitalization: TextCapitalization.none` on the email fields so
-  mobile keyboards don't auto-capitalize as you type.
+**Flutter (`lib/`):** removed the login/signup screens, `auth_provider.dart`,
+`auth_state.dart`, `auth_service.dart`, `token_storage.dart`. The router no
+longer has `/login`/`/signup` routes — the splash screen goes straight to
+the dashboard. `ApiClient` no longer attaches any `Authorization` header;
+`ResumeService` and its two providers (`resume_list_provider.dart`,
+`resume_editor_provider.dart`) no longer thread a token through every call.
 
-Everything else in the auth chain (JWT issuing/verification, secure token
-storage, the Riverpod auth provider, routing, rate limiting) was tested
-directly against a live instance of the backend and worked correctly — that
-wasn't where the problem was.
+I ran this end to end against a fresh database before calling it done:
+listing resumes, creating one, and reading `/users/me` all work with zero
+auth headers, from the very first request the backend ever receives.
 
-## Project structure issues that were cleaned up
+Tests: rewrote `tests/conftest.py` / `test_resumes.py` / `test_ai.py`
+(deleted `test_auth.py`, and dropped the multi-user ownership-isolation
+tests, which no longer apply with one local user). Along the way I found
+and fixed an unrelated pre-existing issue: the test suite ran against
+in-memory SQLite, but `User`/`Resume` use Postgres-native `UUID` columns —
+incompatible with SQLite, so those tests were silently broken before this
+change too. Tests now run against real Postgres (`TEST_DATABASE_URL`),
+matching production. All 18 tests pass.
 
-The uploaded zip had two accidental artifacts, likely from a bad
-zip/re-zip step on export:
-- `backend/backend/` — a full nested duplicate of the entire backend,
-  including a baked-in Python virtualenv (`.venv`). This alone accounted
-  for ~115MB of the 75MB zip's uncompressed size.
-- `backend/lib/` — a stray duplicate of the Flutter `lib/` source tree.
+## Getting it running
 
-Both were removed. Nothing referenced them.
-
-## Why this zip couldn't run as-is, and what to do
-
-The zip only contained `lib/` (Dart source) and `backend/` (the FastAPI
-service) — there was **no `pubspec.yaml`, and no `android/`, `ios/`, `web/`,
-`linux/`, `macos/`, or `windows/` platform folders**. A Flutter app cannot
-build without these; `lib/` alone is not a project.
-
-I added `pubspec.yaml` (with the exact packages the code actually imports —
-`flutter_riverpod`, `go_router`, `http`, `flutter_secure_storage`,
-`shared_preferences`, `google_fonts`, `flutter_animate`) and
-`analysis_options.yaml`.
-
-I intentionally did **not** hand-write the `android/` and `ios/` native
-project files. Those are generated from templates tied to your exact
-installed Flutter/Xcode/Gradle version — hand-authoring them risks
-introducing a *new*, harder-to-diagnose build error from a version mismatch.
-The correct and safe way to generate them is a single official command:
+### Backend
 
 ```bash
-# From the project root (where pubspec.yaml now lives):
+cd backend
+cp .env.example .env
+pip install -r requirements.txt
+docker compose up -d          # starts Postgres + Redis
+uvicorn app.main:app --reload
+```
+
+No env var setup beyond `DATABASE_URL`/`REDIS_URL` (already defaulted to
+match `docker-compose.yml`) — there's no `SECRET_KEY` to generate anymore.
+
+### Flutter
+
+The zip contains `lib/` (Dart source) and now a `pubspec.yaml`, but still
+no `android/`, `ios/`, or other platform folders — a Flutter app can't
+build without them, and hand-authoring native Xcode/Gradle project files
+here would risk a version mismatch with whatever Flutter/Xcode you have
+installed. Generate them with the official tool instead:
+
+```bash
+# From the project root (where pubspec.yaml lives):
 flutter create .
-```
-
-This scaffolds `android/`, `ios/`, and any other platforms you have enabled,
-without touching your existing `lib/` — safe to run even with `lib/`
-already in place. Then:
-
-```bash
 flutter pub get
 flutter run
 ```
 
-### One thing to double check after `flutter create .`
+`flutter create .` is safe to run with `lib/` already in place — it only
+adds the platform folders, it won't touch your existing source.
 
-`AndroidManifest.xml` needs internet permission for the app to reach the
-backend (this is included by default in modern `flutter create` templates,
-but worth confirming):
+### Backend base URL
 
-```xml
-<uses-permission android:name="android.permission.INTERNET" />
-```
-
-### Backend base URL (already noted in `lib/utils/constants.dart`)
+`lib/utils/constants.dart`:
 
 ```dart
 static const apiBaseUrl = 'http://localhost:8000/api/v1';
@@ -101,18 +90,12 @@ static const apiBaseUrl = 'http://localhost:8000/api/v1';
 - iOS simulator / web / desktop: `localhost` works as-is.
 - Physical device: use your host machine's LAN IP.
 
-## Running the backend
+### One thing to check after `flutter create .`
 
-```bash
-cd backend
-cp .env.example .env        # fill in a real SECRET_KEY for anything beyond local dev
-pip install -r requirements.txt
-# Postgres + Redis must be reachable at the URLs in .env — docker-compose.yml
-# starts both if you don't already have them running:
-docker compose up -d
-uvicorn app.main:app --reload
+`AndroidManifest.xml` needs internet permission to reach the backend
+(included by default in modern `flutter create` templates, but worth
+confirming):
+
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
 ```
-
-I verified this exact sequence (Postgres via docker-compose equivalents,
-`pip install -r requirements.txt`, `uvicorn app.main:app`) boots cleanly and
-handles signup → login correctly end to end.

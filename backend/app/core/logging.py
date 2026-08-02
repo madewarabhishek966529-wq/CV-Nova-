@@ -12,8 +12,6 @@ def configure_logging() -> None:
         format=_FORMAT,
         stream=sys.stdout,
     )
-    # Quiet noisy libraries in dev.
-    logging.getLogger("passlib").setLevel(logging.ERROR)
 
 
 def get_logger(name: str) -> logging.Logger:

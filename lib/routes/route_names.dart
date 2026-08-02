@@ -4,8 +4,6 @@ class RouteNames {
   RouteNames._();
 
   static const splash = '/';
-  static const login = '/login';
-  static const signup = '/signup';
   static const dashboard = '/dashboard';
   static const resumeList = '/resumes';
   static const resumeEditor = '/resumes/editor'; // append '/{id}'

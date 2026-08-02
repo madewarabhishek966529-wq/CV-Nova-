@@ -8,8 +8,6 @@ from app.main import app
 
 pytestmark = pytest.mark.asyncio
 
-USER = {"email": "ai-user@example.com", "password": "supersecure123", "full_name": "AI User"}
-
 
 class FakeOllamaClient:
     """Records what it was called with, returns canned output — no network."""
@@ -43,15 +41,6 @@ class FakeOllamaClient:
             yield chunk
 
 
-async def _auth_headers(client: AsyncClient) -> dict:
-    await client.post("/api/v1/auth/signup", json=USER)
-    login = await client.post(
-        "/api/v1/auth/login", json={"email": USER["email"], "password": USER["password"]}
-    )
-    token = login.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
-
-
 @pytest.fixture(autouse=True)
 def _clear_ollama_override():
     yield
@@ -61,7 +50,6 @@ def _clear_ollama_override():
 async def test_generate_returns_content(client: AsyncClient):
     fake = FakeOllamaClient()
     app.dependency_overrides[get_ollama_client] = lambda: fake
-    headers = await _auth_headers(client)
 
     response = await client.post(
         "/api/v1/ai/generate",
@@ -70,7 +58,6 @@ async def test_generate_returns_content(client: AsyncClient):
             "tone": "professional",
             "context": {"role": "Flutter Developer", "company": "Dream Webies", "notes": "built apps"},
         },
-        headers=headers,
     )
     assert response.status_code == 200
     body = response.json()
@@ -83,7 +70,6 @@ async def test_generate_returns_content(client: AsyncClient):
 async def test_generate_passes_context_into_prompt(client: AsyncClient):
     fake = FakeOllamaClient()
     app.dependency_overrides[get_ollama_client] = lambda: fake
-    headers = await _auth_headers(client)
 
     await client.post(
         "/api/v1/ai/generate",
@@ -92,7 +78,6 @@ async def test_generate_passes_context_into_prompt(client: AsyncClient):
             "tone": "executive",
             "context": {"role": "Engineering Manager", "years_experience": "8"},
         },
-        headers=headers,
     )
 
     assert fake.last_call is not None
@@ -104,22 +89,18 @@ async def test_generate_passes_context_into_prompt(client: AsyncClient):
 async def test_generate_uses_requested_model_override(client: AsyncClient):
     fake = FakeOllamaClient()
     app.dependency_overrides[get_ollama_client] = lambda: fake
-    headers = await _auth_headers(client)
 
     response = await client.post(
         "/api/v1/ai/generate",
         json={"content_type": "achievement", "context": {"notes": "won a hackathon"}, "model": "mistral"},
-        headers=headers,
     )
     assert response.json()["model"] == "mistral"
 
 
 async def test_generate_rejects_invalid_content_type(client: AsyncClient):
-    headers = await _auth_headers(client)
     response = await client.post(
         "/api/v1/ai/generate",
         json={"content_type": "not_a_real_type", "context": {}},
-        headers=headers,
     )
     assert response.status_code == 422
 
@@ -127,35 +108,23 @@ async def test_generate_rejects_invalid_content_type(client: AsyncClient):
 async def test_generate_returns_503_when_ollama_unavailable(client: AsyncClient):
     fake = FakeOllamaClient(fail=True)
     app.dependency_overrides[get_ollama_client] = lambda: fake
-    headers = await _auth_headers(client)
 
     response = await client.post(
         "/api/v1/ai/generate",
         json={"content_type": "summary", "context": {}},
-        headers=headers,
     )
     assert response.status_code == 503
 
 
-async def test_generate_requires_auth(client: AsyncClient):
-    fake = FakeOllamaClient()
-    app.dependency_overrides[get_ollama_client] = lambda: fake
-
-    response = await client.post(
-        "/api/v1/ai/generate", json={"content_type": "summary", "context": {}}
-    )
-    assert response.status_code == 401
 
 
 async def test_generate_stream_returns_full_text(client: AsyncClient):
     fake = FakeOllamaClient()
     app.dependency_overrides[get_ollama_client] = lambda: fake
-    headers = await _auth_headers(client)
 
     response = await client.post(
         "/api/v1/ai/generate/stream",
         json={"content_type": "project_description", "context": {"project_name": "CVNova"}},
-        headers=headers,
     )
     assert response.status_code == 200
     assert response.text == "Built a production Flutter app."
@@ -164,12 +133,10 @@ async def test_generate_stream_returns_full_text(client: AsyncClient):
 async def test_generate_stream_returns_503_on_immediate_failure(client: AsyncClient):
     fake = FakeOllamaClient(fail=True)
     app.dependency_overrides[get_ollama_client] = lambda: fake
-    headers = await _auth_headers(client)
 
     response = await client.post(
         "/api/v1/ai/generate/stream",
         json={"content_type": "summary", "context": {}},
-        headers=headers,
     )
     assert response.status_code == 503
 
@@ -177,9 +144,8 @@ async def test_generate_stream_returns_503_on_immediate_failure(client: AsyncCli
 async def test_list_models_returns_parsed_models(client: AsyncClient):
     fake = FakeOllamaClient()
     app.dependency_overrides[get_ollama_client] = lambda: fake
-    headers = await _auth_headers(client)
 
-    response = await client.get("/api/v1/ai/models", headers=headers)
+    response = await client.get("/api/v1/ai/models")
     assert response.status_code == 200
     body = response.json()
     assert body[0]["name"] == "llama3:latest"
@@ -189,7 +155,6 @@ async def test_list_models_returns_parsed_models(client: AsyncClient):
 async def test_list_models_returns_503_when_ollama_unavailable(client: AsyncClient):
     fake = FakeOllamaClient(fail=True)
     app.dependency_overrides[get_ollama_client] = lambda: fake
-    headers = await _auth_headers(client)
 
-    response = await client.get("/api/v1/ai/models", headers=headers)
+    response = await client.get("/api/v1/ai/models")
     assert response.status_code == 503

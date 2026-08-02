@@ -6,44 +6,32 @@ class ResumeService {
 
   final ApiClient _api;
 
-  Future<List<ResumeSummary>> list(String token) async {
-    final json = await _api.getJsonList('/resumes', token: token);
+  Future<List<ResumeSummary>> list() async {
+    final json = await _api.getJsonList('/resumes');
     return json.map((e) => ResumeSummary.fromJson(e as Map<String, dynamic>)).toList();
   }
 
-  Future<Resume> get(String id, String token) async {
-    final json = await _api.getJson('/resumes/$id', token: token);
+  Future<Resume> get(String id) async {
+    final json = await _api.getJson('/resumes/$id');
     return Resume.fromJson(json);
   }
 
-  Future<Resume> create({
-    required String title,
-    required String template,
-    required String token,
-  }) async {
-    final json = await _api.postJson(
-      '/resumes',
-      body: {'title': title, 'template': template},
-      token: token,
-    );
+  Future<Resume> create({required String title, required String template}) async {
+    final json = await _api.postJson('/resumes', body: {'title': title, 'template': template});
     return Resume.fromJson(json);
   }
 
-  Future<Resume> update(Resume resume, String token) async {
-    final json = await _api.putJson(
-      '/resumes/${resume.id}',
-      body: resume.toUpdateJson(),
-      token: token,
-    );
+  Future<Resume> update(Resume resume) async {
+    final json = await _api.putJson('/resumes/${resume.id}', body: resume.toUpdateJson());
     return Resume.fromJson(json);
   }
 
-  Future<void> delete(String id, String token) async {
-    await _api.delete('/resumes/$id', token: token);
+  Future<void> delete(String id) async {
+    await _api.delete('/resumes/$id');
   }
 
-  Future<Resume> duplicate(String id, String token) async {
-    final json = await _api.postJson('/resumes/$id/duplicate', token: token);
+  Future<Resume> duplicate(String id) async {
+    final json = await _api.postJson('/resumes/$id/duplicate');
     return Resume.fromJson(json);
   }
 }

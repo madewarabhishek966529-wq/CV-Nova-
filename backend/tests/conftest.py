@@ -1,31 +1,28 @@
+import os
 from collections.abc import AsyncGenerator
 
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.api.v1.endpoints.auth import limiter
 from app.database.base import Base
 from app.database.session import get_db
 from app.main import app
 
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-
-
-@pytest.fixture(autouse=True)
-def _reset_rate_limiter():
-    """The rate limiter is a module-level singleton shared across every
-    test in the process. Without resetting it, tests that call /login
-    several times exhaust the 10/minute budget for later, unrelated tests.
-    """
-    limiter.reset()
-    yield
+# Tests run against real Postgres, not SQLite — this app uses Postgres-native
+# column types (JSONB, native UUID) in a few places, which aren't portable to
+# SQLite. Matching production's dialect in tests avoids false negatives (and
+# false positives) from dialect differences. Override with TEST_DATABASE_URL
+# if your local Postgres isn't at this default.
+TEST_DATABASE_URL = os.environ.get(
+    "TEST_DATABASE_URL",
+    "postgresql+asyncpg://cvnova:cvnova@localhost:5432/cvnova_test",
+)
 
 
 @pytest_asyncio.fixture
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    engine = create_async_engine(TEST_DATABASE_URL, poolclass=None)
+    engine = create_async_engine(TEST_DATABASE_URL)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -33,6 +30,11 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
     async with session_factory() as session:
         yield session
 
+    async with engine.begin() as conn:
+        # Drop and recreate so each test starts from a clean, empty schema
+        # rather than accumulating rows (e.g. the auto-provisioned local
+        # user) across the whole test run.
+        await conn.run_sync(Base.metadata.drop_all)
     await engine.dispose()
 
 
