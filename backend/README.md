@@ -71,6 +71,10 @@ returns this one local profile.
 | GET    | `/api/v1/ai/models`    | Auto-detected list of locally installed Ollama models |
 | POST   | `/api/v1/ai/generate`  | Generate resume content (non-streaming), returns full text |
 | POST   | `/api/v1/ai/generate/stream` | Same, but streams chunked text as it's generated |
+| POST   | `/api/v1/ats/analyze`  | Upload a PDF resume (+ optional comma-separated target keywords), get scored |
+| GET    | `/api/v1/ats/analyses` | List past analyses (summary shape) |
+| GET    | `/api/v1/ats/analyses/latest` | Most recent analysis, 404 if none yet |
+| GET    | `/api/v1/ats/analyses/{id}` | Full analysis (score + feedback) |
 | GET    | `/health`              | Liveness check                        |
 
 ## Database schema
@@ -198,12 +202,42 @@ failure; `/models` correctly parses Ollama's response shape into
 
 All 18 tests pass.
 
+## ATS resume scoring
+
+`POST /api/v1/ats/analyze` takes a PDF upload (+ optional comma-separated
+target keywords) and returns a score. Deliberately **rule-based, not
+LLM-based** (`app/ats/scorer.py`) — a score needs to be reproducible and
+available even when Ollama isn't running, and this is close to how real ATS
+keyword scanners actually work anyway: it checks resume length, standard
+section headers, presence of contact info, action-verb usage in bullets,
+quantified achievements, and keyword coverage against either the caller's
+target list or a generic keyword bank if none is given. Results persist to
+`resume_analyses` so `/ats/analyses/latest` can drive a dashboard card
+without re-uploading anything.
+
+`app/ats/pdf_extractor.py` isolates `pypdf` behind one function — encrypted
+PDFs get a zero-length-password decrypt attempt, and a PDF with no
+extractable text (e.g. a scanned image) surfaces as a clean 422 rather than
+an empty score.
+
+ATS coverage (`tests/test_ats.py`, using `reportlab`-generated PDFs so the
+tests exercise real PDF parsing, not mocked text): a detailed, well-formed
+resume scores meaningfully higher than a thin one; non-PDF uploads are
+rejected (415); a malformed PDF is rejected (422); supplying target
+keywords actually changes the keyword score and reports the right missing
+keywords; list/latest/get-by-id all work; `/latest` 404s when nothing's
+been analyzed yet.
+
+All 25 tests pass (18 above + 7 ATS).
+
 ## What's stubbed / not yet built
 
 - Resume version history / compare / restore (Resume Version Control phase)
-- ATS scoring, portfolio/cover-letter/interview generation — reserved
-  folders (`app/ats`, `app/portfolio`, `app/interview`, `app/analytics`)
-  exist but are empty
+- Portfolio/cover-letter/interview generation — reserved folders
+  (`app/portfolio`, `app/interview`, `app/analytics`) exist but are empty
+- ATS scoring is rule-based only for now — no LLM-generated qualitative
+  feedback layered on top yet (would reuse the `OllamaClient`/`AIService`
+  pattern, same as resume content generation)
 - No caching of AI responses — regenerating the same content_type+context
   calls Ollama again every time
 - No rate limiting on AI generation — worth adding once this is
@@ -212,7 +246,7 @@ All 18 tests pass.
 
 ## Next phase
 
-ATS scoring: analyze a resume and return overall/formatting/keyword/
-experience/education/projects/grammar scores, weak/strong sections,
-missing keywords, and an improvement plan — likely also Ollama-backed,
-reusing the `OllamaClient`/`AIService` pattern from this phase.
+Layer LLM-generated qualitative feedback on top of the rule-based ATS
+score (e.g. rewritten bullet suggestions, a tailored improvement plan) —
+optional enhancement on an already-working deterministic score, not a
+replacement for it.

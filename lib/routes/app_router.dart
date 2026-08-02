@@ -6,6 +6,7 @@ import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/resume/resume_list_screen.dart';
 import '../screens/resume/resume_editor_screen.dart';
 import '../screens/resume/resume_preview_screen.dart';
+import '../screens/ats/ats_analyzer_screen.dart';
 import 'route_names.dart';
 
 /// App-wide router. CVNova is single-user/local — there's no login/signup
@@ -37,6 +38,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '${RouteNames.resumePreview}/:id',
         builder: (context, state) =>
             ResumePreviewScreen(resumeId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: RouteNames.atsAnalyzer,
+        builder: (context, state) => const AtsAnalyzerScreen(),
       ),
     ],
   );

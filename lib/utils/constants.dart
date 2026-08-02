@@ -11,6 +11,4 @@ class AppConstants {
   // Swap this for a real environment-based config once there's a staging/
   // prod backend to point at.
   static const apiBaseUrl = 'http://localhost:8000/api/v1';
-
-  static const minPasswordLength = 8;
 }

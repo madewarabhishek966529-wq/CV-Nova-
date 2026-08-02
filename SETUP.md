@@ -44,6 +44,33 @@ incompatible with SQLite, so those tests were silently broken before this
 change too. Tests now run against real Postgres (`TEST_DATABASE_URL`),
 matching production. All 18 tests pass.
 
+## ATS resume scoring (new)
+
+Added a real feature, not a stub: upload a PDF resume and get it scored.
+
+**Backend:** `POST /api/v1/ats/analyze` (multipart PDF + optional
+comma-separated target keywords) → rule-based scoring (`app/ats/scorer.py`)
+across formatting, keyword coverage, and impact (action verbs + quantified
+results), persisted so `/ats/analyses/latest` can drive a dashboard card.
+Rule-based rather than LLM-based on purpose — it works even when Ollama
+isn't running. Verified against real generated PDFs, not just unit tests
+with mocked text — see `backend/README.md` for the full writeup and what's
+covered by `tests/test_ats.py`.
+
+**Flutter:** new `AtsAnalyzerScreen` (`lib/screens/ats/`) — pick a PDF
+(`file_picker`), optionally paste target keywords, upload, see the score
+broken down by dimension plus strengths/weaknesses/suggestions, with a
+history list below. `lib/services/ats_service.dart` +
+`lib/providers/ats_provider.dart` wire it up; `ApiClient` gained a
+`postMultipart` method for the file upload.
+
+**Dashboard "fix":** the dashboard previously showed two hardcoded fake
+scores (`0.72`, `0.58`) and a fake "profile completion" ring (`0.4`) —
+numbers that were never wired to anything real. Replaced with a single ATS
+Score card driven by actual analysis data: shows the real score once one
+exists, or an honest "upload a resume to see your score" empty state
+CTA when it doesn't, rather than a number that was never true.
+
 ## Getting it running
 
 ### Backend

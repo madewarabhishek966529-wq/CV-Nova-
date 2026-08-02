@@ -54,6 +54,27 @@ class ApiClient {
     await _send(() => _client.delete(_uri(path), headers: _headers));
   }
 
+  /// Multipart upload — used for the ATS PDF analyzer. Kept separate from
+  /// [postJson] since the request body shape (file + form fields) is
+  /// fundamentally different from a JSON body.
+  Future<Map<String, dynamic>> postMultipart(
+    String path, {
+    required String fileFieldName,
+    required List<int> fileBytes,
+    required String filename,
+    Map<String, String>? fields,
+  }) async {
+    final response = await _send(() async {
+      final request = http.MultipartRequest('POST', _uri(path))
+        ..headers.addAll({'Accept': 'application/json'})
+        ..files.add(http.MultipartFile.fromBytes(fileFieldName, fileBytes, filename: filename));
+      if (fields != null) request.fields.addAll(fields);
+      final streamed = await _client.send(request);
+      return http.Response.fromStream(streamed);
+    });
+    return _decodeObject(response);
+  }
+
   Future<http.Response> _send(Future<http.Response> Function() request) async {
     try {
       final response = await request().timeout(const Duration(seconds: 15));
