@@ -45,7 +45,8 @@ class _AtsAnalyzerScreenState extends ConsumerState<AtsAnalyzerScreen> {
     if (result == null || result.files.isEmpty) return;
     final file = result.files.single;
     if (file.bytes == null) {
-      setState(() => _pickError = "Couldn't read that file — try picking it again.");
+      setState(
+          () => _pickError = "Couldn't read that file — try picking it again.");
       return;
     }
     setState(() => _pickedFile = file);
@@ -108,7 +109,9 @@ class _AtsAnalyzerScreenState extends ConsumerState<AtsAnalyzerScreen> {
                     ),
                     if (_pickError != null) ...[
                       const SizedBox(height: 8),
-                      Text(_pickError!, style: TextStyle(color: AppColors.danger, fontSize: 13)),
+                      Text(_pickError!,
+                          style:
+                              TextStyle(color: AppColors.danger, fontSize: 13)),
                     ],
                     const SizedBox(height: 16),
                     TextField(
@@ -137,11 +140,13 @@ class _AtsAnalyzerScreenState extends ConsumerState<AtsAnalyzerScreen> {
               ),
               if (state.error != null) ...[
                 const SizedBox(height: 12),
-                Text(state.error!, style: TextStyle(color: AppColors.danger, fontSize: 13)),
+                Text(state.error!,
+                    style: TextStyle(color: AppColors.danger, fontSize: 13)),
               ],
               if (state.latest != null) ...[
                 const SizedBox(height: 24),
-                Text('Latest result', style: Theme.of(context).textTheme.titleMedium),
+                Text('Latest result',
+                    style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 12),
                 _AnalysisResultCard(analysis: state.latest!),
               ],
@@ -167,10 +172,14 @@ class _AtsAnalyzerScreenState extends ConsumerState<AtsAnalyzerScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(a.filename, style: Theme.of(context).textTheme.bodyMedium),
+                                    Text(a.filename,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium),
                                     Text(
                                       '${a.score.overall}/100 · ${_formatDate(a.createdAt)}',
-                                      style: Theme.of(context).textTheme.bodySmall,
+                                      style:
+                                          Theme.of(context).textTheme.bodySmall,
                                     ),
                                   ],
                                 ),
@@ -188,7 +197,8 @@ class _AtsAnalyzerScreenState extends ConsumerState<AtsAnalyzerScreen> {
     );
   }
 
-  String _formatDate(DateTime dt) => '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+  String _formatDate(DateTime dt) =>
+      '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
 }
 
 class _AnalysisResultCard extends StatelessWidget {
@@ -210,7 +220,8 @@ class _AnalysisResultCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(analysis.filename, style: Theme.of(context).textTheme.titleMedium),
+                    Text(analysis.filename,
+                        style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 4),
                     Text(
                       '${analysis.wordCount} words',
@@ -219,11 +230,14 @@ class _AnalysisResultCard extends StatelessWidget {
                     const SizedBox(height: 10),
                     Row(
                       children: [
-                        _MiniScore(label: 'Format', value: analysis.score.formatting),
+                        _MiniScore(
+                            label: 'Format', value: analysis.score.formatting),
                         const SizedBox(width: 14),
-                        _MiniScore(label: 'Keywords', value: analysis.score.keywords),
+                        _MiniScore(
+                            label: 'Keywords', value: analysis.score.keywords),
                         const SizedBox(width: 14),
-                        _MiniScore(label: 'Impact', value: analysis.score.impact),
+                        _MiniScore(
+                            label: 'Impact', value: analysis.score.impact),
                       ],
                     ),
                   ],
@@ -260,7 +274,8 @@ class _AnalysisResultCard extends StatelessWidget {
           ],
           if (analysis.feedback.missingKeywords.isNotEmpty) ...[
             const SizedBox(height: 14),
-            Text('Missing keywords', style: Theme.of(context).textTheme.bodyMedium),
+            Text('Missing keywords',
+                style: Theme.of(context).textTheme.bodyMedium),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -270,7 +285,8 @@ class _AnalysisResultCard extends StatelessWidget {
                         label: Text(k),
                         backgroundColor: AppColors.coral.withOpacity(0.12),
                         side: BorderSide.none,
-                        labelStyle: const TextStyle(color: AppColors.coral, fontSize: 12),
+                        labelStyle: const TextStyle(
+                            color: AppColors.coral, fontSize: 12),
                       ))
                   .toList(),
             ),
@@ -321,14 +337,19 @@ class _FeedbackList extends StatelessWidget {
           children: [
             Icon(icon, size: 16, color: color),
             const SizedBox(width: 6),
-            Text(title, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: color)),
+            Text(title,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: color)),
           ],
         ),
         const SizedBox(height: 6),
         ...items.map(
           (item) => Padding(
             padding: const EdgeInsets.only(left: 22, bottom: 4),
-            child: Text('•  $item', style: Theme.of(context).textTheme.bodySmall),
+            child:
+                Text('•  $item', style: Theme.of(context).textTheme.bodySmall),
           ),
         ),
       ],

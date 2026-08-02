@@ -1,20 +1,15 @@
 name: cvnova
-description: "CVNova — AI-powered resume builder & career assistant"
+description: "CVNova — build and manage resumes, with AI-assisted scoring."
 publish_to: 'none'
 version: 0.1.0+1
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
+  flutter: '>=3.19.0'
 
 dependencies:
   flutter:
     sdk: flutter
-
-  # Networking
-  http: ^1.2.1
-
-  # Secure token storage
-  flutter_secure_storage: ^9.2.2
 
   # State management
   flutter_riverpod: ^2.5.1
@@ -22,18 +17,22 @@ dependencies:
   # Routing
   go_router: ^14.2.0
 
-  # Fonts & typography
+  # Networking
+  http: ^1.2.1
+
+  # Theme mode persistence
+  shared_preferences: ^2.2.3
+
+  # Typography
   google_fonts: ^6.2.1
 
-  # Animations
-  lottie: ^3.1.2
+  # Micro-animations (splash screen, etc.)
   flutter_animate: ^4.5.0
 
-  # Icons
-  cupertino_icons: ^1.0.8
+  # PDF picking for the ATS resume analyzer
+  file_picker: ^8.1.2
 
-  # Storage (for theme preference, auth token cache — later phases)
-  shared_preferences: ^2.2.3
+  cupertino_icons: ^1.0.6
 
 dev_dependencies:
   flutter_test:
@@ -42,7 +41,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-  # assets:
-  #   - assets/lottie/
-  #   - assets/images/
