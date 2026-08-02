@@ -80,7 +80,8 @@ cd backend
 cp .env.example .env
 pip install -r requirements.txt
 docker compose up -d          # starts Postgres + Redis
-uvicorn app.main:app --reload
+
+python -m uvicorn app.main:app --reload
 ```
 
 No env var setup beyond `DATABASE_URL`/`REDIS_URL` (already defaulted to
