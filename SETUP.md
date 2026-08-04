@@ -7,42 +7,7 @@ your resumes. This section explains what changed and why; skip to
 
 ## Why no auth
 
-This was a deliberate removal, not a bug fix. The app doesn't need
-multi-tenant accounts to be useful — one person, one device (or one shared
-local backend), one set of resumes.
 
-**Backend (`backend/app/api/deps.py`):** the `get_current_user` dependency
-no longer validates a Bearer token. Instead, it auto-provisions a single
-fixed-UUID row in `users` (`00000000-0000-0000-0000-000000000001`,
-`local@cvnova.app`) the first time the app is ever hit, and returns that
-same row on every request after. Every other endpoint (`resumes.py`,
-`ai.py`) needed **zero changes** — they still depend on `CurrentUser`,
-which now just resolves differently.
-
-Removed entirely: `endpoints/auth.py`, `services/auth_service.py`,
-`schemas/auth.py`, `core/security.py` (JWT + password hashing), the
-`passlib`/`bcrypt`/`python-jose`/`slowapi` dependencies, and the JWT
-settings (`SECRET_KEY`, `ALGORITHM`, token expiry) from config.
-
-**Flutter (`lib/`):** removed the login/signup screens, `auth_provider.dart`,
-`auth_state.dart`, `auth_service.dart`, `token_storage.dart`. The router no
-longer has `/login`/`/signup` routes — the splash screen goes straight to
-the dashboard. `ApiClient` no longer attaches any `Authorization` header;
-`ResumeService` and its two providers (`resume_list_provider.dart`,
-`resume_editor_provider.dart`) no longer thread a token through every call.
-
-I ran this end to end against a fresh database before calling it done:
-listing resumes, creating one, and reading `/users/me` all work with zero
-auth headers, from the very first request the backend ever receives.
-
-Tests: rewrote `tests/conftest.py` / `test_resumes.py` / `test_ai.py`
-(deleted `test_auth.py`, and dropped the multi-user ownership-isolation
-tests, which no longer apply with one local user). Along the way I found
-and fixed an unrelated pre-existing issue: the test suite ran against
-in-memory SQLite, but `User`/`Resume` use Postgres-native `UUID` columns —
-incompatible with SQLite, so those tests were silently broken before this
-change too. Tests now run against real Postgres (`TEST_DATABASE_URL`),
-matching production. All 18 tests pass.
 
 ## ATS resume scoring (new)
 
