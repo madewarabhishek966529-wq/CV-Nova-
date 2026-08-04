@@ -78,13 +78,3 @@ static const apiBaseUrl = 'http://localhost:8000/api/v1';
   `10.0.2.2` instead.
 - iOS simulator / web / desktop: `localhost` works as-is.
 - Physical device: use your host machine's LAN IP.
-
-### One thing to check after `flutter create .`
-
-`AndroidManifest.xml` needs internet permission to reach the backend
-(included by default in modern `flutter create` templates, but worth
-confirming):
-
-```xml
-<uses-permission android:name="android.permission.INTERNET" />
-```
