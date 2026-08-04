@@ -5,10 +5,6 @@ signup, no accounts, no tokens — you open the app and you're straight into
 your resumes. This section explains what changed and why; skip to
 "Getting it running" if you just want to build it.
 
-## Why no auth
-
-
-
 ## ATS resume scoring (new)
 
 Added a real feature, not a stub: upload a PDF resume and get it scored.
