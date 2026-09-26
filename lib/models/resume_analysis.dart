@@ -17,6 +17,13 @@ class ScoreBreakdown {
         keywords: json['keywords'] as int,
         impact: json['impact'] as int,
       );
+
+  Map<String, dynamic> toJson() => {
+        'overall': overall,
+        'formatting': formatting,
+        'keywords': keywords,
+        'impact': impact,
+      };
 }
 
 class AnalysisFeedback {
@@ -38,10 +45,16 @@ class AnalysisFeedback {
         missingKeywords: List<String>.from(json['missing_keywords'] as List? ?? const []),
         suggestions: List<String>.from(json['suggestions'] as List? ?? const []),
       );
+
+  Map<String, dynamic> toJson() => {
+        'strengths': strengths,
+        'weaknesses': weaknesses,
+        'missing_keywords': missingKeywords,
+        'suggestions': suggestions,
+      };
 }
 
-/// Lightweight shape for history lists — mirrors the backend's
-/// ResumeAnalysisSummary (no feedback payload).
+/// Lightweight shape for history lists — mirrors ResumeAnalysisSummary.
 class ResumeAnalysisSummary {
   const ResumeAnalysisSummary({
     required this.id,
@@ -64,6 +77,14 @@ class ResumeAnalysisSummary {
         score: ScoreBreakdown.fromJson(json['score'] as Map<String, dynamic>),
         createdAt: DateTime.parse(json['created_at'] as String),
       );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'filename': filename,
+        'word_count': wordCount,
+        'score': score.toJson(),
+        'created_at': createdAt.toIso8601String(),
+      };
 }
 
 class ResumeAnalysis {
@@ -90,5 +111,22 @@ class ResumeAnalysis {
         score: ScoreBreakdown.fromJson(json['score'] as Map<String, dynamic>),
         feedback: AnalysisFeedback.fromJson(json['feedback'] as Map<String, dynamic>),
         createdAt: DateTime.parse(json['created_at'] as String),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'filename': filename,
+        'word_count': wordCount,
+        'score': score.toJson(),
+        'feedback': feedback.toJson(),
+        'created_at': createdAt.toIso8601String(),
+      };
+
+  ResumeAnalysisSummary toSummary() => ResumeAnalysisSummary(
+        id: id,
+        filename: filename,
+        wordCount: wordCount,
+        score: score,
+        createdAt: createdAt,
       );
 }

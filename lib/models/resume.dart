@@ -609,6 +609,24 @@ class Resume {
         'hidden_sections': hiddenSections,
       };
 
+  /// Full JSON serialization for local persistence.
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'user_id': userId,
+        'updated_at': updatedAt.toIso8601String(),
+        ...toUpdateJson(),
+      };
+
+  ResumeSummary toSummary() => ResumeSummary(
+        id: id,
+        title: title,
+        template: template,
+        themeColor: themeColor,
+        isPrimary: isPrimary,
+        headline: headline,
+        updatedAt: updatedAt,
+      );
+
   Resume copyWith({
     String? title,
     String? template,

@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,12 +47,23 @@ class _AtsAnalyzerScreenState extends ConsumerState<AtsAnalyzerScreen> {
     );
     if (result == null || result.files.isEmpty) return;
     final file = result.files.single;
-    if (file.bytes == null) {
+    Uint8List? bytes = file.bytes;
+    if (bytes == null && file.path != null) {
+      try {
+        bytes = await File(file.path!).readAsBytes();
+      } catch (_) {}
+    }
+    if (bytes == null) {
       setState(
           () => _pickError = "Couldn't read that file — try picking it again.");
       return;
     }
-    setState(() => _pickedFile = file);
+    setState(() => _pickedFile = PlatformFile(
+          name: file.name,
+          size: file.size,
+          bytes: bytes,
+          path: file.path,
+        ));
   }
 
   Future<void> _analyze() async {

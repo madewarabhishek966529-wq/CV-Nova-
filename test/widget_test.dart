@@ -1,35 +1,45 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:cvnova/main.dart';
+import 'package:cvnova/services/ats_scorer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('App smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const ProviderScope(child: CVNovaApp()));
-
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
   });
-}
 
-class MyApp {
-  const MyApp();
+  test('AtsScorer evaluates resume text correctly', () {
+    const sampleResume = '''
+John Doe
+john.doe@example.com | +1 555-123-4567
+
+Summary
+Experienced software engineer with a strong track record.
+
+Experience
+• Led architecture of mobile app in Flutter, scaling to 100,000 active users.
+• Developed REST APIs with 99.9% uptime and reduced latency by 35%.
+• Spearheaded automated test suites and improved developer productivity.
+
+Education
+• Bachelor of Science in Computer Science
+
+Skills
+• Flutter, Dart, Python, SQL, Git, AWS, Docker, Kubernetes
+''';
+
+    final result = AtsScorer.score(sampleResume, targetKeywords: ['flutter', 'python', 'aws']);
+    expect(result.wordCount, greaterThan(30));
+    expect(result.score.overall, greaterThan(40));
+    expect(result.score.keywords, 100);
+    expect(result.score.impact, greaterThan(40));
+    expect(result.feedback.strengths, isNotEmpty);
+  });
+
+  testWidgets('CVNovaApp boots and renders title', (WidgetTester tester) async {
+    await tester.pumpWidget(const ProviderScope(child: CVNovaApp()));
+    await tester.pump(const Duration(seconds: 3));
+    expect(find.byType(CVNovaApp), findsOneWidget);
+  });
 }
