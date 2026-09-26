@@ -5,9 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../models/resume.dart';
 import '../../providers/resume_list_provider.dart';
 import '../../routes/route_names.dart';
+import '../../services/pdf_export_service.dart';
+import '../../services/resume_service.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/common/glass_card.dart';
 import '../../widgets/common/gradient_button.dart';
+import '../../widgets/resume/ats_quick_score_sheet.dart';
 
 class ResumeListScreen extends ConsumerStatefulWidget {
   const ResumeListScreen({super.key});
@@ -61,7 +64,7 @@ class _ResumeListScreenState extends ConsumerState<ResumeListScreen> {
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: const Text('Delete'),
           ),
         ],
@@ -97,18 +100,37 @@ class _ResumeListScreenState extends ConsumerState<ResumeListScreen> {
               : state.resumes.isEmpty
                   ? _EmptyState(onCreate: _createResume)
                   : ListView.builder(
+                      physics: const BouncingScrollPhysics(),
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
                       itemCount: state.resumes.length,
                       itemBuilder: (context, index) {
-                        final resume = state.resumes[index];
+                        final r = state.resumes[index];
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
-                          child: _ResumeCard(
-                            resume: resume,
-                            onOpen: () => context.push('${RouteNames.resumeEditor}/${resume.id}'),
-                            onDuplicate: () =>
-                                ref.read(resumeListProvider.notifier).duplicate(resume.id),
-                            onDelete: () => _confirmDelete(resume),
+                          child: RepaintBoundary(
+                            key: ValueKey(r.id),
+                            child: _ResumeCard(
+                              resume: r,
+                              onTap: () => context.push('${RouteNames.resumePreview}/${r.id}'),
+                              onEdit: () => context.push('${RouteNames.resumeEditor}/${r.id}'),
+                              onDuplicate: () =>
+                                  ref.read(resumeListProvider.notifier).duplicate(r.id),
+                              onDelete: () => _confirmDelete(r),
+                              onQuickAts: () async {
+                                final full = await ResumeService().get(r.id);
+                                if (context.mounted) {
+                                  AtsQuickScoreSheet.show(context, full);
+                                }
+                              },
+                              onMatchJd: () => context.push(
+                                RouteNames.jdMatcher,
+                                extra: r.id,
+                              ),
+                              onSharePdf: () async {
+                                final full = await ResumeService().get(r.id);
+                                await PdfExportService.exportAndShare(full);
+                              },
+                            ),
                           ),
                         );
                       },
@@ -122,30 +144,46 @@ class _ResumeListScreenState extends ConsumerState<ResumeListScreen> {
 class _ResumeCard extends StatelessWidget {
   const _ResumeCard({
     required this.resume,
-    required this.onOpen,
+    required this.onTap,
+    required this.onEdit,
     required this.onDuplicate,
     required this.onDelete,
+    required this.onQuickAts,
+    required this.onMatchJd,
+    required this.onSharePdf,
   });
 
   final ResumeSummary resume;
-  final VoidCallback onOpen;
+  final VoidCallback onTap;
+  final VoidCallback onEdit;
   final VoidCallback onDuplicate;
   final VoidCallback onDelete;
+  final VoidCallback onQuickAts;
+  final VoidCallback onMatchJd;
+  final VoidCallback onSharePdf;
 
   @override
   Widget build(BuildContext context) {
-    final color = _parseColor(resume.themeColor);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(24),
-      onTap: onOpen,
-      child: GlassCard(
+    return GlassCard(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
         child: Row(
           children: [
             Container(
-              width: 8,
-              height: 44,
-              decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: _parseColor(resume.themeColor).withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: _parseColor(resume.themeColor).withValues(alpha: 0.4),
+                  width: 1.5,
+                ),
+              ),
+              child: Icon(Icons.article_rounded, color: _parseColor(resume.themeColor)),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -157,7 +195,7 @@ class _ResumeCard extends StatelessWidget {
                       Flexible(
                         child: Text(
                           resume.title,
-                          style: Theme.of(context).textTheme.titleLarge,
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -166,26 +204,40 @@ class _ResumeCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.indigo.withOpacity(0.12),
+                            color: AppColors.primary.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Text(
+                          child: const Text(
                             'Primary',
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelSmall
-                                ?.copyWith(color: AppColors.indigo),
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ],
                     ],
                   ),
-                  if (resume.headline != null && resume.headline!.isNotEmpty)
-                    Text(resume.headline!, style: Theme.of(context).textTheme.bodySmall),
+                  if (resume.headline != null && resume.headline!.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      resume.headline!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                   const SizedBox(height: 4),
                   Text(
                     'Updated ${_relativeTime(resume.updatedAt)}',
-                    style: Theme.of(context).textTheme.labelSmall,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
+                    ),
                   ),
                 ],
               ),
@@ -193,12 +245,47 @@ class _ResumeCard extends StatelessWidget {
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert_rounded),
               onSelected: (value) {
-                if (value == 'duplicate') onDuplicate();
-                if (value == 'delete') onDelete();
+                switch (value) {
+                  case 'edit':
+                    onEdit();
+                  case 'ats':
+                    onQuickAts();
+                  case 'jd':
+                    onMatchJd();
+                  case 'pdf':
+                    onSharePdf();
+                  case 'duplicate':
+                    onDuplicate();
+                  case 'delete':
+                    onDelete();
+                }
               },
               itemBuilder: (context) => const [
-                PopupMenuItem(value: 'duplicate', child: Text('Duplicate')),
-                PopupMenuItem(value: 'delete', child: Text('Delete')),
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Row(children: [Icon(Icons.edit_outlined, size: 18), SizedBox(width: 10), Text('Edit')]),
+                ),
+                PopupMenuItem(
+                  value: 'ats',
+                  child: Row(children: [Icon(Icons.bolt_rounded, color: AppColors.amber, size: 18), SizedBox(width: 10), Text('1-Tap ATS Check')]),
+                ),
+                PopupMenuItem(
+                  value: 'jd',
+                  child: Row(children: [Icon(Icons.troubleshoot_rounded, color: AppColors.cyan, size: 18), SizedBox(width: 10), Text('Match with Job')]),
+                ),
+                PopupMenuItem(
+                  value: 'pdf',
+                  child: Row(children: [Icon(Icons.share_rounded, size: 18), SizedBox(width: 10), Text('Share PDF')]),
+                ),
+                PopupMenuDivider(),
+                PopupMenuItem(
+                  value: 'duplicate',
+                  child: Row(children: [Icon(Icons.copy_rounded, size: 18), SizedBox(width: 10), Text('Duplicate')]),
+                ),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(children: [Icon(Icons.delete_outline_rounded, color: AppColors.danger, size: 18), SizedBox(width: 10), Text('Delete', style: TextStyle(color: AppColors.danger))]),
+                ),
               ],
             ),
           ],
@@ -209,7 +296,11 @@ class _ResumeCard extends StatelessWidget {
 
   Color _parseColor(String hex) {
     final cleaned = hex.replaceAll('#', '');
-    return Color(int.parse('FF$cleaned', radix: 16));
+    try {
+      return Color(int.parse('FF$cleaned', radix: 16));
+    } catch (_) {
+      return AppColors.primary;
+    }
   }
 
   String _relativeTime(DateTime dt) {
@@ -232,19 +323,31 @@ class _EmptyState extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.description_outlined, size: 56, color: AppColors.textSecondaryLight),
-            const SizedBox(height: 16),
-            Text('No resumes yet', style: Theme.of(context).textTheme.headlineSmall),
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.description_outlined, size: 40, color: AppColors.primary),
+            ),
+            const SizedBox(height: 20),
+            Text('No resumes yet', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
-            Text(
-              'Create your first resume to get started.',
+            const Text(
+              'Build your first resume in minutes with our deterministic ATS scoring assistant.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 24),
-            GradientButton(label: 'Create resume', expand: false, onPressed: onCreate),
+            GradientButton(
+              label: 'Create first resume',
+              icon: Icons.add_rounded,
+              expand: false,
+              onPressed: onCreate,
+            ),
           ],
         ),
       ),

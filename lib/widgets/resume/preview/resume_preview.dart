@@ -38,8 +38,8 @@ class ResumePreview extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(4),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 24, offset: const Offset(0, 8)),
+        boxShadow: const [
+          BoxShadow(color: Color(0x14000000), blurRadius: 24, offset: Offset(0, 8)),
         ],
       ),
       child: Column(
@@ -114,7 +114,7 @@ class _SectionTitle extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Container(height: 1.4, color: accent.withOpacity(0.25)),
+          Container(height: 1.4, color: accent.withValues(alpha: 0.25)),
         ],
       ),
     );
@@ -494,7 +494,7 @@ class _TagSection extends StatelessWidget {
               .map((t) => Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: accent.withOpacity(0.08),
+                      color: accent.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(t, style: TextStyle(fontSize: 12, color: accent, fontWeight: FontWeight.w600)),

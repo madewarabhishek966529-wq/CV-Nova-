@@ -53,7 +53,7 @@ class _TagInputState extends State<TagInput> {
             children: widget.tags
                 .map((tag) => Chip(
                       label: Text(tag),
-                      backgroundColor: AppColors.indigo.withOpacity(0.12),
+                      backgroundColor: AppColors.primary.withValues(alpha: 0.12),
                       side: BorderSide.none,
                       deleteIcon: const Icon(Icons.close_rounded, size: 16),
                       onDeleted: () => _remove(tag),

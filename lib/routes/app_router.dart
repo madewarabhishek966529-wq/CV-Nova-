@@ -7,11 +7,9 @@ import '../screens/resume/resume_list_screen.dart';
 import '../screens/resume/resume_editor_screen.dart';
 import '../screens/resume/resume_preview_screen.dart';
 import '../screens/ats/ats_analyzer_screen.dart';
+import '../screens/jd_matcher/jd_matcher_screen.dart';
 import 'route_names.dart';
 
-/// App-wide router. CVNova is single-user/local — there's no login/signup
-/// flow and nothing to redirect-gate here. The splash screen is purely a
-/// branding beat before landing on the dashboard.
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: RouteNames.splash,
@@ -42,6 +40,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RouteNames.atsAnalyzer,
         builder: (context, state) => const AtsAnalyzerScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.jdMatcher,
+        builder: (context, state) => JdMatcherScreen(
+          initialResumeId: state.extra as String?,
+        ),
       ),
     ],
   );

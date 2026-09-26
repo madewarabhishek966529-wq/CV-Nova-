@@ -6,6 +6,7 @@ import '../../models/resume.dart';
 import '../../providers/resume_editor_provider.dart';
 import '../../routes/route_names.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/resume/ats_quick_score_sheet.dart';
 import '../../widgets/resume/dialogs/custom_section_dialog.dart';
 import '../../widgets/resume/dialogs/education_dialog.dart';
 import '../../widgets/resume/dialogs/experience_dialog.dart';
@@ -62,6 +63,11 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
           ),
         ),
         actions: [
+          IconButton(
+            tooltip: '1-Tap ATS Check',
+            icon: const Icon(Icons.bolt_rounded, color: AppColors.amber),
+            onPressed: () => AtsQuickScoreSheet.show(context, resume),
+          ),
           IconButton(
             tooltip: 'Preview',
             icon: const Icon(Icons.visibility_outlined),

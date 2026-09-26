@@ -6,6 +6,7 @@ class RouteNames {
   static const splash = '/';
   static const dashboard = '/dashboard';
   static const atsAnalyzer = '/ats';
+  static const jdMatcher = '/jd-matcher';
   static const resumeList = '/resumes';
   static const resumeEditor = '/resumes/editor'; // append '/{id}'
   static const resumePreview = '/resumes/preview'; // append '/{id}'

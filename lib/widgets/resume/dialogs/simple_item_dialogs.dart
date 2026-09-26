@@ -153,7 +153,7 @@ class _LanguageDialogState extends State<_LanguageDialog> {
         DialogField(child: TextField(controller: name, decoration: const InputDecoration(labelText: 'Language'))),
         DialogField(
           child: DropdownButtonFormField<String>(
-            value: proficiency,
+            initialValue: proficiency,
             decoration: const InputDecoration(labelText: 'Proficiency'),
             items: kLanguageProficiencies
                 .map((p) => DropdownMenuItem(value: p, child: Text(p[0].toUpperCase() + p.substring(1))))

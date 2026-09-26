@@ -125,7 +125,7 @@ class _AtsAnalyzerScreenState extends ConsumerState<AtsAnalyzerScreen> {
                       const SizedBox(height: 8),
                       Text(_pickError!,
                           style:
-                              TextStyle(color: AppColors.danger, fontSize: 13)),
+                              const TextStyle(color: AppColors.danger, fontSize: 13)),
                     ],
                     const SizedBox(height: 16),
                     TextField(
@@ -155,7 +155,7 @@ class _AtsAnalyzerScreenState extends ConsumerState<AtsAnalyzerScreen> {
               if (state.error != null) ...[
                 const SizedBox(height: 12),
                 Text(state.error!,
-                    style: TextStyle(color: AppColors.danger, fontSize: 13)),
+                    style: const TextStyle(color: AppColors.danger, fontSize: 13)),
               ],
               if (state.latest != null) ...[
                 const SizedBox(height: 24),
@@ -297,7 +297,7 @@ class _AnalysisResultCard extends StatelessWidget {
               children: analysis.feedback.missingKeywords
                   .map((k) => Chip(
                         label: Text(k),
-                        backgroundColor: AppColors.coral.withOpacity(0.12),
+                        backgroundColor: AppColors.coral.withValues(alpha: 0.12),
                         side: BorderSide.none,
                         labelStyle: const TextStyle(
                             color: AppColors.coral, fontSize: 12),
@@ -387,10 +387,10 @@ class DottedUploadTarget extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: picked ? AppColors.mint : AppColors.indigo.withOpacity(0.4),
+          color: picked ? AppColors.mint : AppColors.indigo.withValues(alpha: 0.4),
           width: 1.4,
         ),
-        color: picked ? AppColors.mint.withOpacity(0.06) : Colors.transparent,
+        color: picked ? AppColors.mint.withValues(alpha: 0.06) : Colors.transparent,
       ),
       child: Column(
         children: [
