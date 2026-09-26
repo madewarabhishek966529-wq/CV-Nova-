@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../routes/route_names.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_gradients.dart';
+import '../../widgets/common/app_logo.dart';
 
 /// Purely a branding beat — CVNova is single-user/local, so there's no
 /// session to restore and nothing to gate on here. It just shows the logo
@@ -45,23 +46,31 @@ class _SplashScreenState extends State<SplashScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                const AppLogo(size: 84, showGlow: true)
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .scale(begin: const Offset(0.85, 0.85), end: const Offset(1, 1), curve: Curves.easeOutBack),
+                const SizedBox(height: 20),
                 ShaderMask(
                   shaderCallback: (bounds) =>
                       AppGradients.hero.createShader(bounds),
                   child: Text(
                     'CVNova',
-                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
                           color: Colors.white,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.8,
                         ),
                   ),
-                ).animate().fadeIn(duration: 500.ms).scale(
-                    begin: const Offset(0.92, 0.92), end: const Offset(1, 1)),
-                const SizedBox(height: 10),
+                ).animate(delay: 150.ms).fadeIn(duration: 400.ms),
+                const SizedBox(height: 8),
                 Text(
-                  'Build the resume that gets you the interview',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ).animate(delay: 200.ms).fadeIn(duration: 500.ms),
+                  'Next-Gen Resume & Career Intelligence',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        letterSpacing: -0.2,
+                        color: Colors.white.withValues(alpha: 0.75),
+                      ),
+                ).animate(delay: 250.ms).fadeIn(duration: 400.ms),
               ],
             ),
           ),

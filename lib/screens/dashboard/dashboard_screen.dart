@@ -10,6 +10,7 @@ import '../../services/pdf_export_service.dart';
 import '../../services/resume_service.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_gradients.dart';
+import '../../widgets/common/app_logo.dart';
 import '../../widgets/common/backup_restore_dialog.dart';
 import '../../widgets/common/glass_card.dart';
 import '../../widgets/common/score_ring.dart';
@@ -49,25 +50,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
       appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                gradient: AppGradients.hero,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              alignment: Alignment.center,
-              child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 20),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'CVNova',
-              style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.5),
-            ),
-          ],
-        ),
+        title: const AppLogo(size: 34, showText: true),
         actions: [
           IconButton(
             icon: const Icon(Icons.backup_outlined),
